@@ -851,7 +851,8 @@ buildNav();
 
 
 /* ---------- videos: play inside the story card wherever the host allows it ---------- */
-let EMBED_OK=false;
+// On a normal website (like GitHub Pages) videos play inside the card right away.
+let EMBED_OK=/^https?:$/.test(location.protocol)&&!/claude|anthropic/i.test(location.hostname);
 (function testEmbed(){
   // Players need a real web address (YouTube refuses file:// pages) and a host that allows YouTube frames.
   if(!/^https?:$/.test(location.protocol))return;
@@ -860,12 +861,12 @@ let EMBED_OK=false;
   const f=document.createElement('iframe');f.src='https://www.youtube-nocookie.com/embed/';f.tabIndex=-1;f.setAttribute('aria-hidden','true');f.title='';
   f.style.cssText='position:fixed;left:-20px;top:-20px;width:1px;height:1px;opacity:0;pointer-events:none;border:0';
   document.body.appendChild(f);
-  setTimeout(()=>{EMBED_OK=!blocked;f.remove();},1200);
+  setTimeout(()=>{if(blocked)EMBED_OK=false;f.remove();document.removeEventListener('securitypolicyviolation',h);},1500);
 })();
 function playHere(vf){
   const id=vf.dataset.vid,title=vf.dataset.vt||'Video';
   const box=document.createElement('div');box.className='vplayer';
-  box.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="${title}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  box.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(location.origin)}" title="${title}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   let blocked=false;const h=e=>{if(/youtube/i.test(e.blockedURI||''))blocked=true;};
   document.addEventListener('securitypolicyviolation',h);
   vf.replaceWith(box);box.querySelector('iframe').focus();
